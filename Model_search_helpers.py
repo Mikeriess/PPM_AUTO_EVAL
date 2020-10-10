@@ -226,7 +226,7 @@ def train_model(data_objects, model_params, final_model=False):
         #early_stopping = EarlyStopping(patience=earlystop_patience) # 42 for Navarini paper
         
         #compiling the model, creating the callbacks
-        model.compile(loss='mae', #L1 loss
+        model.compile(loss="mse", #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #'mae', #L1 loss
               optimizer=optimizer, 
               metrics=['mean_squared_error', 'mae', 'mape'])
         

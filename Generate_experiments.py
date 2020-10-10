@@ -18,7 +18,7 @@ if DOE == "Full_factorial":
                 'F_mutation_prob':[0.5], #0.02, 0.1, 0.2, 0.5 #Same as in GA paper (Exploitation), balanced, and exploration (lots of randomness)
                 'F_num_generations':[3], #2, 10
                 'F_population_size':[5], #5, 20
-                'F_lofi_epochs':[150]} #1, 10, 20, 30, 40, 50 #,10 # Fast, balanced, thorough
+                'F_lofi_epochs':[1]} #1, 10, 20, 30, 40, 50 #,10 # Fast, balanced, thorough
         
     
     # Generate a full factorial:

@@ -10,25 +10,31 @@ import os
 # Project specs:
 
 # Project name
-project_name = "PPM-AUTO-EVAL-MAIN" #_helpdesk
+#project_name = "PPM-AUTO-EVAL-MAIN" #_helpdesk
 
 # Parent destination    
-parent = "A:/EXPERIMENTS/"
+workdir = "A:/EXPERIMENTS/PPM-AUTO-EVAL-MAIN/"
+
+# Experiment folder name
+project_name ="experiments_GA_gen3_pop5_lofi150_MSE"
 
 # Generate the project folder if it doesnt exist
-workdir = os.path.join(parent, str(project_name))
-if not os.path.exists(workdir):
-    os.mkdir(workdir)
-    os.mkdir(workdir+"/experiments")
+project_dir = workdir+ str("/"+project_name)
+
+# Parent Directory path for storage of experiments
+if not os.path.exists(project_dir):
+    os.mkdir(project_dir)
+    os.mkdir(project_dir+"/Final_models")
+    os.mkdir(project_dir+"/Final_models"+"/individuals")
+    os.mkdir(project_dir+"/Final_models"+"/inference_tables")
+    os.mkdir(project_dir+"/Final_models"+"/models")
+    os.mkdir(project_dir+"/Final_models"+"/train_logfiles")
 
 ##############################################################################
 
 # Specify which configfile to store:
 configfilename = "configfile.csv"
 store_progress = False
-
-# Parent Directory path for storage of experiments
-experiments_dir = workdir+"/experiments"
 
 # Specify whether to use Fractional factorial (with labels) or full factorial without.
 DOE = ["Full_factorial","Fractional_factorial"][0]
@@ -63,7 +69,7 @@ Elitism: https://groups.google.com/forum/#!topic/deap-users/FCPOYmO_enQ
 """
 
 # Load constant GA search settings
-elitism = 1                  #same as GA paper
+elitism = 1                  #same as GA paper <<<<<< should perhaps be more than 1!
 #crossover_probability = 0.8 #same as GA paper <<<<<< changed to 1-mutation prob, since they either mutate or cross over
 
 
@@ -90,7 +96,7 @@ for experiment_i in experiment_list:
         import os 
           
         #Experiment
-        path = os.path.join(experiments_dir, str(experiment_i)) 
+        path = os.path.join(project_dir, str(experiment_i)) 
         
         if not os.path.exists(path):
             os.mkdir(path) 
@@ -154,7 +160,7 @@ for experiment_i in experiment_list:
         population_size = F_population_size
         num_generations = F_num_generations
         k_in_hall_of_fame = population_size * num_generations #Store all individuals
-        Finalmodel_epochs = 250
+        Finalmodel_epochs = 700
 
 
         #### Experiment settings
@@ -200,7 +206,7 @@ for experiment_i in experiment_list:
             
             # Binary mate, mutate 
             toolbox.register('mate', tools.cxOrdered)
-            toolbox.register('mutate', tools.mutShuffleIndexes, indpb = 0.5) #50% chance of shuffling attr
+            toolbox.register('mutate', tools.mutShuffleIndexes, indpb = 0.5) #Independent probability for each attribute to be exchanged to another position (50% chance of shuffling attr, if individual is selected)
             
             # NSGA-II selection
             toolbox.register("select", tools.selNSGA2)
@@ -220,7 +226,6 @@ for experiment_i in experiment_list:
             
             # Save some statistics:
             statistics = tools.Statistics(key=lambda ind: ind.fitness.values)
-            #statistics.register("avg", np.mean)
             statistics.register("avg", np.mean, axis=0)
             statistics.register("std", np.std, axis=0)
             statistics.register("min", np.min, axis=0)
@@ -240,8 +245,8 @@ for experiment_i in experiment_list:
             lastgen, logbook = algorithms.eaMuPlusLambda(pop, toolbox, 
                                                  mu=toolbox.pop_size, #The number of individuals to select for the next generation.
                                                  lambda_= toolbox.pop_size + elitism, #The number of children to produce at each generation.
-                                                 cxpb=1-toolbox.mut_prob, #CXPB
-                                                 mutpb=toolbox.mut_prob, #MUTPB
+                                                 cxpb=1-toolbox.mut_prob, #CXPB is the probability that an offspring is produced by crossover (1- mutation prob = if not mutated, then cross over)
+                                                 mutpb=toolbox.mut_prob, #MUTPB is The probability that an offspring is produced by mutation
                                                  stats=statistics, 
                                                  halloffame=hof, #Save the all-time K best individuals
                                                  ngen=toolbox.max_gen, #The number of generation.
@@ -302,8 +307,8 @@ for experiment_i in experiment_list:
             toolbox.register('population', tools.initRepeat, list , toolbox.individual)
             
             toolbox.register('mate', tools.cxOrdered)
-            toolbox.register('mutate', tools.mutShuffleIndexes, indpb = 0.5) #50% chance of shuffling attr
-            toolbox.register('select', tools.selRoulette)
+            toolbox.register('mutate', tools.mutShuffleIndexes, indpb = 0.5) #Independent probability for each attribute to be exchanged to another position (50% chance of shuffling attr, if individual is selected)
+            toolbox.register('select', tools.selBest)
             toolbox.register('evaluate', train_evaluate)
             
             # Use the toolbox to store other configuration parameters of the algorithm. 
@@ -323,8 +328,6 @@ for experiment_i in experiment_list:
             
             # Save hall of fame:
             hof = tools.HallOfFame(k_in_hall_of_fame)
-            
-            # A compact implementation
             
             # Storing all the required information in the toolbox and using DEAP's 
             # algorithms.eaMuPlusLambda function
