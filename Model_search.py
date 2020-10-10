@@ -16,10 +16,10 @@ project_name = "PPM-AUTO-EVAL-MAIN" #_helpdesk
 parent = "A:/EXPERIMENTS/"
 
 # Generate the project folder if it doesnt exist
-path = os.path.join(parent, str(project_name))
-if not os.path.exists(path):
-    os.mkdir(path)
-    os.mkdir(path+"/experiments")
+workdir = os.path.join(parent, str(project_name))
+if not os.path.exists(workdir):
+    os.mkdir(workdir)
+    os.mkdir(workdir+"/experiments")
 
 ##############################################################################
 
@@ -28,14 +28,15 @@ configfilename = "configfile.csv"
 store_progress = False
 
 # Parent Directory path for storage of experiments
-parent_dir = path+"/experiments"
+experiments_dir = workdir+"/experiments"
 
 # Specify whether to use Fractional factorial (with labels) or full factorial without.
 DOE = ["Full_factorial","Fractional_factorial"][0]
 
 ##############################################################################
 
-os.chdir(path)
+# Set the workdir
+os.chdir(workdir)
 
 from deap import base, creator, tools, algorithms
 from scipy.stats import bernoulli
@@ -44,11 +45,11 @@ import time
 
 import numpy as np
 import pandas as pd
-from Model_search_helpers import *
-from Eval_helpers import *
-from Reporting import*
+from PPM_AUTO_EVAL.Model_search_helpers import *
+from PPM_AUTO_EVAL.Eval_helpers import *
+from PPM_AUTO_EVAL.Reporting import*
 
-from HPO_searchspace import *
+from PPM_AUTO_EVAL.HPO_searchspace import *
 
 # Load up the experiments
 experiments = pd.read_csv("experiments.csv")
@@ -89,7 +90,7 @@ for experiment_i in experiment_list:
         import os 
           
         #Experiment
-        path = os.path.join(parent_dir, str(experiment_i)) 
+        path = os.path.join(experiments_dir, str(experiment_i)) 
         
         if not os.path.exists(path):
             os.mkdir(path) 

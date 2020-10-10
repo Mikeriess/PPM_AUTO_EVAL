@@ -37,6 +37,8 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from sklearn.model_selection import train_test_split as split
 
 import tensorflow.keras.backend as K
+
+
 import tensorflow.keras.callbacks as Kc
 
 import time
@@ -48,13 +50,21 @@ from bitstring import BitArray
 
 
 
-from Eval_helpers import *
-from Reporting import *
-from Model_architecture import *
-from HPO_searchspace import *
+from PPM_AUTO_EVAL.Eval_helpers import *
+from PPM_AUTO_EVAL.Reporting import *
+from PPM_AUTO_EVAL.Model_architecture import *
+from PPM_AUTO_EVAL.HPO_searchspace import *
+
+"""
+# FP16 precision:
 
 
+dtype='float16'
+K.set_floatx(dtype)
 
+# default is 1e-7 which is too small for float16.  Without adjusting the epsilon, we will get NaN predictions because of divide by zero problems
+K.set_epsilon(1e-4) 
+"""
 
 # Callback for tracking training time per epoch:
 class TimeHistory(Kc.Callback): #callbacks.

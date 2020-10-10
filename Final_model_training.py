@@ -13,10 +13,10 @@ import time
 
 import numpy as np
 import pandas as pd
-from Model_search_helpers import *
-from Eval_helpers import *
 
-from HPO_searchspace import *
+from PPM_AUTO_EVAL.Model_search_helpers import *
+from PPM_AUTO_EVAL.Eval_helpers import *
+from PPM_AUTO_EVAL.HPO_searchspace import *
 
 K = 1
 DOE = ["Full_factorial","Fractional_factorial"][0]

@@ -12,7 +12,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 
-from Model_search_helpers import *
+from PPM_AUTO_EVAL.Model_search_helpers import *
 
 from deap import base, creator, tools, algorithms
 from scipy.stats import bernoulli
@@ -21,7 +21,7 @@ import time
 
 ##############################################################################
 # Specify number of nodes to work at the same time.
-
+"""
 v_cores = 8
 
 import multiprocessing
@@ -29,7 +29,7 @@ from joblib import Parallel, delayed
     
 
 pool = multiprocessing.Pool(processes=v_cores) #multiprocessing.cpu_count())
-
+"""
 ##############################################################################
 
 """
@@ -285,13 +285,13 @@ def TS_group(table):
     return SSC, PSC, SMSC, case_id #MAEPE, MAE, 
 
 
-
+"""
 def applyParallel(dfGrouped, func):
     JOBZ = 12 #multiprocessing.cpu_count()
     retLst = Parallel(n_jobs=JOBZ)(delayed(func)(group) for name, group in dfGrouped)
     return retLst #pd.concat(retLst)
 
-
+"""
 
 def Earliness_and_TS(Inference_test, parallel=False, EAR=True, TS=True):
     
@@ -302,8 +302,8 @@ def Earliness_and_TS(Inference_test, parallel=False, EAR=True, TS=True):
         Temporal stability
         """
         print("Temporal stability...")
-        if parallel == True:
-            res = applyParallel(Inference_test.groupby(["caseid"]), TS_group)
+        #if parallel == True:
+        #    res = applyParallel(Inference_test.groupby(["caseid"]), TS_group)
                 
         if parallel == False:
             values = Inference_test.groupby(["caseid"]).apply(TS_group)

@@ -15,14 +15,14 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 
-from Model_search_helpers import *
+from PPM_AUTO_EVAL.Model_search_helpers import *
 
 from deap import base, creator, tools, algorithms
 from scipy.stats import bernoulli
 from bitstring import BitArray
 import time
 
-from Eval_helpers import *
+from PPM_AUTO_EVAL.Eval_helpers import *
 
 
 """

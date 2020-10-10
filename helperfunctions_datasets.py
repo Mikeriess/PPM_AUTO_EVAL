@@ -29,7 +29,7 @@ def InitialFormatting(df, maxcases, dateformat):
 """
 
 import pandas as pd
-import helperfunctions as hf
+import PPM_AUTO_EVAL.helperfunctions as hf
 
 
 def GetFileInfo(df):
@@ -51,7 +51,7 @@ def GetFileInfo(df):
 def LoadDataSet(file, No_features, Max_num_cases):
     import pandas as pd
     import numpy as np
-    import helperfunctions as hf
+    import PPM_AUTO_EVAL.helperfunctions as hf
     
     if file == "Sepsis":
         separator=";"

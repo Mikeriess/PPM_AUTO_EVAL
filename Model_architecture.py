@@ -33,8 +33,8 @@ from bitstring import BitArray
 
 from random import randrange
 
-from Eval_helpers import*
-from HPO_searchspace import *
+from PPM_AUTO_EVAL.Eval_helpers import*
+from PPM_AUTO_EVAL.HPO_searchspace import *
 
 
 def GenModel(data_objects, model_params):
