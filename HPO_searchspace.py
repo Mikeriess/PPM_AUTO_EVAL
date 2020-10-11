@@ -74,11 +74,11 @@ HP7_bits = 2 # DROPOUT_RATE [0, 0.1, 0.25, 0.5]
 
 HP8_bits = 2 # batch_size (8, 16, 32, 64, 128, 256, 512, 1024)
 HP9_bits = 2 # learningrate (0.0001, 0.001, 0.005, 0.01)
-HP10_bits = 1 # optimizer (Adam, Nadam, Radam)
+HP10_bits = 1 # optimizer (Adam, Nadam) Radam
 
 ##################### REMEMBER - the order of the params matter!
 
-gene_length = (HP1_1_bits+HP1_2_bits+HP1_3_bits+HP1_4_bits) + HP2_bits + HP3_bits + HP4_bits + HP5_bits + HP6_bits + HP7_bits + HP8_bits + HP9_bits + HP10_bits
+gene_length = (HP1_1_bits + HP1_2_bits + HP1_3_bits + HP1_4_bits) + HP2_bits + HP3_bits + HP4_bits + HP5_bits + HP6_bits + HP7_bits + HP8_bits + HP9_bits + HP10_bits
 
 
 def GeneConverter(individual):
@@ -114,7 +114,7 @@ def GeneConverter(individual):
     FC_BLOCK4 = [25, 50, 100, 150][FC_BLOCK4]
     
     # Block layers: less than 7
-    BLOCK_LAYERS = [1, 2, 3, 4, 5, 6, 7, 8][BLOCK_LAYERS]
+    BLOCK_LAYERS = [1, 2, 3, 4][BLOCK_LAYERS] #, 5, 6, 7, 8
     
     BLOCK1_TYPE = [1, 2, 3, 4][BLOCK1_TYPE]
     BLOCK2_TYPE = [1, 2, 3, 4][BLOCK2_TYPE]

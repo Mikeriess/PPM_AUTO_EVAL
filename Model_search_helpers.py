@@ -39,6 +39,11 @@ from sklearn.model_selection import train_test_split as split
 import tensorflow.keras.backend as K
 import tensorflow.keras.callbacks as Kc
 
+# Mixed precision
+
+#from tensorflow.keras.mixed_precision import experimental as mixed_precision
+#mixed_precision.set_policy('mixed_float16')
+
 # Disable eager execution
 import tensorflow as tf
 tf.compat.v1.disable_eager_execution()
@@ -127,7 +132,7 @@ def prepare_dataset(suffix=None, sample=1.0):
 
 def train_model(data_objects, model_params, final_model=False):
     # To prevent tensorboard errors
-    K.clear_session()
+    #K.clear_session()
     
     #### Load the data ########
     x_train, y_train = data_objects["x_train"], data_objects["y_train"]
@@ -184,7 +189,7 @@ def train_model(data_objects, model_params, final_model=False):
     time_callback = TimeHistory()
     
     #Early stopping for the initial search
-    earlystop_patience = 20#10 #42
+    earlystop_patience = 20 #42 for the navarini paper
     
     early_stopping = EarlyStopping(patience=earlystop_patience)    
     
@@ -215,11 +220,6 @@ def train_model(data_objects, model_params, final_model=False):
                                    verbose=0, 
                                    save_best_only=True, 
                                    mode='auto')
-        
-        #Learning rate for model search
-        #earlystop_patience = 
-        
-        #early_stopping = EarlyStopping(patience=earlystop_patience) # 42 for Navarini paper
         
         #compiling the model, creating the callbacks
         model.compile(loss="mae", 
@@ -255,36 +255,33 @@ def train_model(data_objects, model_params, final_model=False):
         
         from tensorflow.keras.models import load_model
         model = load_model(modeldestination)
-        
+        print("Loaded model..")
+        print(modeldestination)
         
         #Filename for the model: FINAL
         filename = Project_dir + "/Final_models/models/" +"Experiment_"+str(RUN)+"" + str(model_params["individual"]) +".h5"
         
         model_checkpoint = ModelCheckpoint(filename, 
                                    monitor='val_loss', 
-                                   verbose=0, 
+                                   verbose=1, 
                                    save_best_only=True, 
                                    mode='auto')
-                
-        earlystop_patience = 20 #10 #42
-        
-        early_stopping = EarlyStopping(patience=earlystop_patience) # 42 for Navarini paper
-        
+             
         lr_reducer = ReduceLROnPlateau(monitor='val_loss', 
                                        factor=0.5, 
                                        patience=10, 
-                                       verbose=0, 
+                                       verbose=1, 
                                        mode='auto', 
                                        epsilon=0.0001, 
                                        cooldown=0, 
                                        min_lr=0)
-
+        """
         #compiling the model, creating the callbacks
         model.compile(loss='mae', #L1 loss
               optimizer=optimizer, 
               metrics=['mae']) #'mean_squared_error','mae','mape'
         
-        
+        """
         # Store starttime
         start_time = time.time()
         

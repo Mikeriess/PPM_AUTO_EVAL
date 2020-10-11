@@ -16,7 +16,7 @@ import os
 workdir = "A:/EXPERIMENTS/PPM-AUTO-EVAL-MAIN/"
 
 # Experiment folder name
-project_name ="mixed_precision_test" #"experiments_GA_gen3_pop5_lofi150_MSE"
+project_name ="GA_Lofi_Sepsis_2levels" #"experiments_GA_gen3_pop5_lofi150_MSE"
 
 # Generate the project folder if it doesnt exist
 project_dir = workdir+ str("/"+project_name)
@@ -69,7 +69,7 @@ Elitism: https://groups.google.com/forum/#!topic/deap-users/FCPOYmO_enQ
 """
 
 # Load constant GA search settings
-elitism = 1                  #same as GA paper <<<<<< should perhaps be more than 1!
+elitism = 2#1                  #same as GA paper <<<<<< should perhaps be more than 1!
 #crossover_probability = 0.8 #same as GA paper <<<<<< changed to 1-mutation prob, since they either mutate or cross over
 
 
@@ -161,7 +161,7 @@ for experiment_i in experiment_list:
         population_size = F_population_size
         num_generations = F_num_generations
         k_in_hall_of_fame = population_size * num_generations #Store all individuals
-        Finalmodel_epochs = experiments.Finalmodel_epochs
+        Finalmodel_epochs = experiments.Finalmodel_epochs.values[0]
         
         # Additional info
         Experiment_notes = Experiment_Settings["Notes"]
