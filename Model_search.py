@@ -16,7 +16,7 @@ import os
 workdir = "A:/EXPERIMENTS/PPM-AUTO-EVAL-MAIN/"
 
 # Experiment folder name
-project_name ="experiments_GA_gen3_pop5_lofi150_MSE"
+project_name ="mixed_precision_test" #"experiments_GA_gen3_pop5_lofi150_MSE"
 
 # Generate the project folder if it doesnt exist
 project_dir = workdir+ str("/"+project_name)
@@ -155,12 +155,16 @@ for experiment_i in experiment_list:
             F_lofi_epochs = experiments.F_lofi_epochs[RUN]
             
             
+            
                
         # Search parameters:        
         population_size = F_population_size
         num_generations = F_num_generations
         k_in_hall_of_fame = population_size * num_generations #Store all individuals
-        Finalmodel_epochs = 700
+        Finalmodel_epochs = experiments.Finalmodel_epochs
+        
+        # Additional info
+        Experiment_notes = Experiment_Settings["Notes"]
 
 
         #### Experiment settings
@@ -174,10 +178,12 @@ for experiment_i in experiment_list:
                                    "F_lofi_epochs":F_lofi_epochs,
                                    "F_modeltype":F_modeltype,
                                    "HOF_size":k_in_hall_of_fame,
-                                   "Finalmodel_epochs":Finalmodel_epochs}, index=[0])
+                                   "Finalmodel_epochs":Finalmodel_epochs,
+                                   "Project_dir":project_dir,
+                                   "Notes":Experiment_notes}, index=[0])
         
         configfile.to_csv(configfilename,index=False)
-        configfile.to_csv("experiments/"+str(RUN)+"/"+"Configfile.csv",index=False)
+        configfile.to_csv(project_dir+"/"+str(RUN)+"/"+"Configfile.csv",index=False)
         
         print("================================"*3)
         print(configfile.loc[0])
@@ -405,11 +411,11 @@ for experiment_i in experiment_list:
                 
                 if i == 0:
                     # Load each result table
-                    last_gen_results = pd.read_csv("experiments/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
+                    last_gen_results = pd.read_csv(project_dir+"/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
                     
                 if i > 0:
                     # Load each result table
-                    individual_i_res = pd.read_csv("experiments/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
+                    individual_i_res = pd.read_csv(project_dir+"/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
                     
                     #append to existing table
                     last_gen_results = last_gen_results.append(individual_i_res, ignore_index=True)
@@ -424,7 +430,7 @@ for experiment_i in experiment_list:
             #last_gen_results.to_csv("experiments/"+str(RUN)+"/"+str(RUN)+"_RS_all_models_results.csv",index=False)
             
             last_gen_results["Search"] = "RS"
-            last_gen_results.to_csv("experiments/"+str(RUN)+"/HOF_results.csv",index=False)
+            last_gen_results.to_csv(project_dir+"/"+str(RUN)+"/HOF_results.csv",index=False)
             
             hof_results = last_gen_results
         
@@ -458,3 +464,4 @@ for experiment_i in experiment_list:
         experiments.In_Progress.loc[experiments.RUN == experiment_i] = 0
         experiments.Duration_sec.loc[experiments.RUN == experiment_i] = Time_sec
         experiments.to_csv("experiments.csv",index=False)
+        experiments.to_csv(project_dir+"/"+"experiments.csv",index=False)

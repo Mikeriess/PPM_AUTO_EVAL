@@ -25,6 +25,16 @@ from sklearn.model_selection import train_test_split as split
 import tensorflow.keras.backend as K
 import tensorflow.keras.callbacks as Kc
 
+# Mixed precision
+
+#from tensorflow.keras.mixed_precision import experimental as mixed_precision
+#mixed_precision.set_policy('mixed_float16')
+
+# Disable eager execution
+import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
+
+
 import time
 from datetime import datetime
 
@@ -41,7 +51,7 @@ def GenModel(data_objects, model_params):
     
     # Load the data to check dimensionality
     x_train, y_train = data_objects["x_train"], data_objects["y_train"]
-    print("Shape:",x_train.shape)
+    print("Input data shape:",x_train.shape)
     
     # Model-controlled parameters:
     F_modeltype = data_objects["F_modeltype"]
@@ -77,6 +87,24 @@ def GenModel(data_objects, model_params):
     PADDING = 0 #used for analysis only
     
     input_dim = (x_train.shape[1], x_train.shape[2])
+    
+    # Print the configuration to be trained:
+        
+    print("Hyper params:")
+    print("================================"*3)
+    print("Blocks:",model_params["BLOCK_LAYERS"])
+    
+    print("Block types:",model_params["BLOCK1_TYPE"],model_params["BLOCK2_TYPE"],model_params["BLOCK3_TYPE"],model_params["BLOCK4_TYPE"])
+    print("Hidden units:", model_params["FC_BLOCK1"], model_params["FC_BLOCK2"], model_params["FC_BLOCK3"], model_params["FC_BLOCK4"])
+    print("Dropout:",(model_params["DROPOUT_RATE"]))
+    
+    print("Dropout:",(model_params["DROPOUT_RATE"]))
+    print("batch_size:",(model_params["batch_size"]))
+    print("optimizer:",(model_params["optimizer"]))
+    print("learningrate:",(model_params["learningrate"]))
+    
+    print("================================"*3)
+        
     
     #######################################################################
     
@@ -297,9 +325,11 @@ def GenModel(data_objects, model_params):
            
             print("Done.")
                 
-            model.add(Dense(1))
+            model.add(Dense(1)) #, dtype='float32' #Only the softmax is adviced to be float32 
         
     #print(model.summary())
+    
+    print("Total number of params:",model.count_params())
     #################### TESTING #########################
     
     """

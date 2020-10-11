@@ -15,18 +15,24 @@ if DOE == "Full_factorial":
                               #"Hospital_billing",
                               #"SF_eventlog_filter_length1",
                               #"traffic_fines"
-                'F_mutation_prob':[0.5], #0.02, 0.1, 0.2, 0.5 #Same as in GA paper (Exploitation), balanced, and exploration (lots of randomness)
-                'F_num_generations':[3], #2, 10
-                'F_population_size':[5], #5, 20
-                'F_lofi_epochs':[1]} #1, 10, 20, 30, 40, 50 #,10 # Fast, balanced, thorough
-        
+                'F_mutation_prob':[0.8], #0.02, 0.1, 0.2, 0.5 #Same as in GA paper (Exploitation), balanced, and exploration (lots of randomness)
+                'F_num_generations':[2], #2, 10
+                'F_population_size':[2], #5, 20
+                'F_lofi_epochs':[150]} #1, 10, 20, 30, 40, 50 #,10 # Fast, balanced, thorough
     
     # Generate a full factorial:
     df=build_full_fact(Settings)  
     
+    # Set the final number of epochs for all models
+    Final_epochs = 800
+    
+    # Add notes to the configfile
+    Settings["Notes"] = "This test is intended to check performance of global float16 in training"
+    Settings["Finalmodel_epochs"] = Final_epochs
     
     # Save the settings to a file
-    np.save('Experiment_Settings.npy', Settings) 
+    np.save('../Experiment_Settings.npy', Settings) 
+
 
 if DOE == "Fractional_factorial":
     df = pd.read_csv("../FF_Experiments.csv")
@@ -37,7 +43,10 @@ if DOE == "Fractional_factorial":
 # Constants affecting the experiments:
 df["Finalmodel_Done"] = 0 #Flag if the final model has been trained
 df["Duration_sec"] = 0
+df["Finalmodel_epochs"] = Final_epochs
 
+
+# Placeholders for statistics
 df["MAE_min"] = 0.0
 df["MAE_max"] = 0.0
 df["MAE_avg"] = 0.0

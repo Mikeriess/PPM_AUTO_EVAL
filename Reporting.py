@@ -33,6 +33,8 @@ from PPM_AUTO_EVAL.Eval_helpers import *
 
 
 def SaveLastGenResults(data_objects, res, logbook, RUN, start_time):
+    configfile = pd.read_csv("configfile.csv")
+    Project_dir = configfile.Project_dir.values[0]
 
     # Wrap chaper evaluation into a function
     def post_evaluation(data_objects, individual):
@@ -61,11 +63,11 @@ def SaveLastGenResults(data_objects, res, logbook, RUN, start_time):
         
         if i == 0:
             # Load each result table
-            last_gen_results = pd.read_csv("experiments/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv") #+RUN+"_"
+            last_gen_results = pd.read_csv(Project_dir+"/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv") #+RUN+"_"
             
         if i > 0:
             # Load each result table
-            individual_i_res = pd.read_csv("experiments/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
+            individual_i_res = pd.read_csv(Project_dir+"/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
             
             #append to existing table
             last_gen_results = last_gen_results.append(individual_i_res, ignore_index=True)
@@ -78,7 +80,7 @@ def SaveLastGenResults(data_objects, res, logbook, RUN, start_time):
     
     # Append it to the full generation results
     last_gen_results["Search"] = "GA"
-    last_gen_results.to_csv("experiments/"+str(RUN)+"/HOF_results.csv",index=False)
+    last_gen_results.to_csv(Project_dir+"/"+str(RUN)+"/HOF_results.csv",index=False)
     print("Saved HOF results")
     
     return last_gen_results
@@ -88,6 +90,8 @@ def SaveLastGenResults(data_objects, res, logbook, RUN, start_time):
 
 
 def SaveLogbookResults(logbook,F_modelselection, RUN, population_size, num_generations, gene_length):
+    configfile = pd.read_csv("configfile.csv")
+    Project_dir = configfile.Project_dir.values[0]
 
     #for gen in 
     len(logbook)
@@ -127,7 +131,7 @@ def SaveLogbookResults(logbook,F_modelselection, RUN, population_size, num_gener
                                         "ear_min":ear_min,
                                         "ear_max":ear_max})
         
-        logbook_results.to_csv("experiments/"+str(RUN)+"/"+str(RUN)+"_GA_logbook_results.csv",index=False)
+        logbook_results.to_csv(Project_dir+"/"+str(RUN)+"/"+str(RUN)+"_GA_logbook_results.csv",index=False)
         
     if F_modelselection == "Single-MAE":
         for gen in range(0,len(logbook)):
@@ -146,7 +150,7 @@ def SaveLogbookResults(logbook,F_modelselection, RUN, population_size, num_gener
                                         "acc_min":acc_min,
                                         "acc_max":acc_max})
     
-        logbook_results.to_csv("experiments/"+str(RUN)+"/"+str(RUN)+"_GA_logbook_results.csv",index=False)
+        logbook_results.to_csv(Project_dir+"/"+str(RUN)+"/"+str(RUN)+"_GA_logbook_results.csv",index=False)
     
     if F_modelselection == "Single-MAEPE":
         for gen in range(0,len(logbook)):
@@ -165,7 +169,7 @@ def SaveLogbookResults(logbook,F_modelselection, RUN, population_size, num_gener
                                         "ear_min":ear_min,
                                         "ear_max":ear_max})
     
-        logbook_results.to_csv("experiments/"+str(RUN)+"/"+str(RUN)+"_GA_logbook_results.csv",index=False)
+        logbook_results.to_csv(Project_dir+"/"+str(RUN)+"/"+str(RUN)+"_GA_logbook_results.csv",index=False)
     
     if F_modelselection == "RS":
         # Store starttime
@@ -197,11 +201,11 @@ def SaveLogbookResults(logbook,F_modelselection, RUN, population_size, num_gener
             
             if i == 0:
                 # Load each result table
-                last_gen_results = pd.read_csv("experiments/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
+                last_gen_results = pd.read_csv(Project_dir+"/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
                 
             if i > 0:
                 # Load each result table
-                individual_i_res = pd.read_csv("experiments/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
+                individual_i_res = pd.read_csv(Project_dir+"/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
                 
                 #append to existing table
                 last_gen_results = last_gen_results.append(individual_i_res, ignore_index=True)
@@ -213,12 +217,14 @@ def SaveLogbookResults(logbook,F_modelselection, RUN, population_size, num_gener
         last_gen_results["Total_time"] = [Time_sec]*len(last_gen_results)
         
         # Append it to the full generation results
-        last_gen_results.to_csv("experiments/"+str(RUN)+"/"+str(RUN)+"_RS_all_models_results.csv",index=False)
+        last_gen_results.to_csv(Project_dir+"/"+str(RUN)+"/"+str(RUN)+"_RS_all_models_results.csv",index=False)
     
     return print("Saved last gen results")
 
 def StoreParetoFronts(data_objects, res, RUN):
-    from Model_search_helpers import load_evaluate
+    configfile = pd.read_csv("configfile.csv")
+    Project_dir = configfile.Project_dir.values[0]
+    from PPM_AUTO_EVAL.Model_search_helpers import load_evaluate
     
     # Wrap chaper evaluation into a function
     def post_evaluation(data_objects, individual):
@@ -268,7 +274,7 @@ def StoreParetoFronts(data_objects, res, RUN):
     pareto_fronts = pareto_fronts.drop_duplicates(subset='individual', keep="first")
     
     #Store the pareto fronts
-    pareto_fronts.to_csv("experiments/"+str(RUN)+"/"+str(RUN)+"_GA_pareto_fronts.csv",index=False)
+    pareto_fronts.to_csv(Project_dir+"/"+str(RUN)+"/"+str(RUN)+"_GA_pareto_fronts.csv",index=False)
 
     
     ###############################################################################
@@ -303,6 +309,6 @@ def StoreParetoFronts(data_objects, res, RUN):
     plt.ylabel('Objective 2: MEP')
     
     #plt.show()
-    plt.savefig("experiments/"+str(RUN)+"/"+str(RUN)+"_GA_pareto_fronts.png",dpi=150)
+    plt.savefig(Project_dir+"/"+str(RUN)+"/"+str(RUN)+"_GA_pareto_fronts.png",dpi=150)
     
     return print("Saved pareto fronts (log and plot)..")

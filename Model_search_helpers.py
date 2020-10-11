@@ -37,9 +37,11 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from sklearn.model_selection import train_test_split as split
 
 import tensorflow.keras.backend as K
-
-
 import tensorflow.keras.callbacks as Kc
+
+# Disable eager execution
+import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 
 import time
 from datetime import datetime
@@ -47,24 +49,12 @@ from datetime import datetime
 from deap import base, creator, tools, algorithms
 from bitstring import BitArray
 
-
-
-
+# Custom imports
 from PPM_AUTO_EVAL.Eval_helpers import *
 from PPM_AUTO_EVAL.Reporting import *
 from PPM_AUTO_EVAL.Model_architecture import *
 from PPM_AUTO_EVAL.HPO_searchspace import *
 
-"""
-# FP16 precision:
-
-
-dtype='float16'
-K.set_floatx(dtype)
-
-# default is 1e-7 which is too small for float16.  Without adjusting the epsilon, we will get NaN predictions because of divide by zero problems
-K.set_epsilon(1e-4) 
-"""
 
 # Callback for tracking training time per epoch:
 class TimeHistory(Kc.Callback): #callbacks.
@@ -145,7 +135,9 @@ def train_model(data_objects, model_params, final_model=False):
         
     #################### Solution ##########################
     # Load the settings of the current experiment:
-    configfile = pd.read_csv(configfilename)   
+    configfile = pd.read_csv(configfilename)
+    Project_dir = configfile.Project_dir.values[0]
+    
     RUN = configfile["RUN"][0]
     epochs = int(configfile["F_lofi_epochs"][0])
     epochs_final = configfile["Finalmodel_epochs"][0]
@@ -159,12 +151,12 @@ def train_model(data_objects, model_params, final_model=False):
     
     if final_model == False:
         #Log training history of the individual to csv
-        csvfilename = "experiments/" + str(RUN)+ "/train_logfiles/" + str(RUN) + "_" + str(model_params["individual"]) +".csv"
+        csvfilename = Project_dir+"/" + str(RUN)+ "/train_logfiles/" + str(RUN) + "_" + str(model_params["individual"]) +".csv"
         csv_logger = CSVLogger(csvfilename, append=False, separator=',')
     
     if final_model == True:
         #Log training history of the individual to csv
-        csvfilename = "experiments/Final_models/train_logfiles/"+"Trainlog_experiment_" + str(RUN) + "_" + str(model_params["individual"]) +".csv"
+        csvfilename = Project_dir+"/Final_models/train_logfiles/"+"Trainlog_experiment_" + str(RUN) + "_" + str(model_params["individual"]) +".csv"
         csv_logger = CSVLogger(csvfilename, append=False, separator=',')
     
     ##########################################################
@@ -173,7 +165,11 @@ def train_model(data_objects, model_params, final_model=False):
     
     # Generate the model
     model, blocks_built = GenModel(data_objects, model_params)
-
+    
+    ##########################################################
+    # Multi GPU
+    ##########################################################
+    
     # Conditional multi-GPU training:
     #if final_model == False and epochs > 1:
         #model = multi_gpu_model(model, gpus=2)
@@ -212,7 +208,7 @@ def train_model(data_objects, model_params, final_model=False):
     if final_model == False:
         
         #Filename for the model: INTIAL
-        filename = "experiments/" + str(RUN)+ "/models/" + str(model_params["individual"]) +".h5"
+        filename = Project_dir+"/" + str(RUN)+ "/models/" + str(model_params["individual"]) +".h5"
         
         model_checkpoint = ModelCheckpoint(filename, 
                                    monitor='val_loss', 
@@ -226,9 +222,9 @@ def train_model(data_objects, model_params, final_model=False):
         #early_stopping = EarlyStopping(patience=earlystop_patience) # 42 for Navarini paper
         
         #compiling the model, creating the callbacks
-        model.compile(loss="mse", #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #'mae', #L1 loss
+        model.compile(loss="mae", 
               optimizer=optimizer, 
-              metrics=['mean_squared_error', 'mae', 'mape'])
+              metrics=["mae"]) #'mean_squared_error', 'mae', 'mape'
         
         # Store starttime
         start_time = time.time()
@@ -245,7 +241,7 @@ def train_model(data_objects, model_params, final_model=False):
         
         # REPLACE with best version of the model (checkpoint)
         if epochs > 1:
-            from keras.models import load_model
+            from tensorflow.keras.models import load_model
             model = load_model(filename)
         
     ########################################################
@@ -255,25 +251,22 @@ def train_model(data_objects, model_params, final_model=False):
     if final_model == True:
         
         #Load the winner model:
-        modeldestination = "experiments/" + str(RUN)+ "/models/" + str(model_params["individual"]) +".h5"
+        modeldestination = Project_dir + "/" + str(RUN)+ "/models/" + str(model_params["individual"]) +".h5"
         
-        from keras.models import load_model
+        from tensorflow.keras.models import load_model
         model = load_model(modeldestination)
         
         
         #Filename for the model: FINAL
-        filename = "experiments/Final_models/models/" +"Experiment_"+str(RUN)+"" + str(model_params["individual"]) +".h5"
+        filename = Project_dir + "/Final_models/models/" +"Experiment_"+str(RUN)+"" + str(model_params["individual"]) +".h5"
         
         model_checkpoint = ModelCheckpoint(filename, 
                                    monitor='val_loss', 
                                    verbose=0, 
                                    save_best_only=True, 
                                    mode='auto')
-        
-        #Learning rate for full  model
-        #learningrate = 0.001
-        
-        earlystop_patience = 20#10 #42
+                
+        earlystop_patience = 20 #10 #42
         
         early_stopping = EarlyStopping(patience=earlystop_patience) # 42 for Navarini paper
         
@@ -424,6 +417,7 @@ def evaluate_model(data_objects, mode="first-off", final_model=False, TS=True):
         
         # Load config-file
         configfile = pd.read_csv(configfilename)
+        Project_dir = configfile.Project_dir.values[0]
         
         RUN = configfile["RUN"][0]
         F_dataset = configfile["F_dataset"][0]
@@ -479,7 +473,7 @@ def evaluate_model(data_objects, mode="first-off", final_model=False, TS=True):
         precision_ev, recall_ev, accuracy_ev, f1_ev, Inference_test = UCL_eval_class(Inference_test, level="event")
 
         # Dump the inference tables for debugging
-        Inference_test.to_csv("experiments/Final_models/inference_tables/"+"Final_"+"Inf_test_"+str(RUN)+".csv",index=False)
+        Inference_test.to_csv(Project_dir+"/Final_models/inference_tables/"+"Final_"+"Inf_test_"+str(RUN)+".csv",index=False)
         
 
         
@@ -508,7 +502,7 @@ def evaluate_model(data_objects, mode="first-off", final_model=False, TS=True):
         report = pd.DataFrame(report, index=[0])
  
         # Adding "final_" + search type to file name for final model
-        report.to_csv("experiments/Final_models/individuals/"+"Final_" + str(RUN) + ".csv",index=False) 
+        report.to_csv(Project_dir+"/Final_models/individuals/"+"Final_" + str(RUN) + ".csv",index=False) 
             
         output = report
 
@@ -565,6 +559,7 @@ def evaluate_model(data_objects, mode="first-off", final_model=False, TS=True):
         
         # Load config-file
         configfile = pd.read_csv(configfilename)
+        Project_dir = configfile.Project_dir.values[0]
         
         RUN = configfile["RUN"][0]
         F_dataset = configfile["F_dataset"][0]
@@ -598,7 +593,7 @@ def evaluate_model(data_objects, mode="first-off", final_model=False, TS=True):
             
             report = pd.DataFrame(report, index=[0])
             # Storing individual
-            report.to_csv("experiments/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv",index=False)
+            report.to_csv(Project_dir+"/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv",index=False)
             
         output = (mae_test, maepe_test, mep_test)
         
@@ -616,7 +611,7 @@ def load_evaluate(data_objects):
     
     # Get the filename of the model - here decoded again, since data objects
     # will be loaded again from scratch in post-evaluation
-    filename = "experiments/" + str(RUN)+ "/models/" + str(BitArray(data_objects["individual"]).uint) +".h5"
+    filename = Project_dir+"/" + str(RUN)+ "/models/" + str(BitArray(data_objects["individual"]).uint) +".h5"
      
     #Load the model and add it to the data object
     from keras.models import load_model
@@ -645,12 +640,7 @@ def train_evaluate(individual, train_final_model=False):
         
         #Do not include TS if this is not final model:
         eval_TS = False
-        
-        print("Hyper params:")
-        print("================================"*3)
-        print(model_params)       
-        print("================================"*3)
-        
+    
         ##############################################
         
         #Step1: Dataprep

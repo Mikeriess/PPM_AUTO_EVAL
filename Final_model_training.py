@@ -4,7 +4,9 @@ Created on Mon Jul 20 18:03:46 2020
 
 @author: Mike
 """
-
+# Set the workdir
+import os
+os.chdir("../")
 
 from deap import base, creator, tools, algorithms
 from scipy.stats import bernoulli
@@ -17,6 +19,13 @@ import pandas as pd
 from PPM_AUTO_EVAL.Model_search_helpers import *
 from PPM_AUTO_EVAL.Eval_helpers import *
 from PPM_AUTO_EVAL.HPO_searchspace import *
+
+
+
+# Load the project dir
+configfile = pd.read_csv("configfile.csv")
+Project_dir = configfile.Project_dir.values[0]
+
 
 K = 1
 DOE = ["Full_factorial","Fractional_factorial"][0]
@@ -52,6 +61,11 @@ for experiment_i in experiments.RUN:
         # Load the levels of the experiment
         Experiment_Settings = np.load('Experiment_Settings.npy',allow_pickle='TRUE').item()
         
+        configfile = pd.read_csv(Project_dir+"/"+str(RUN)+"/configfile.csv")
+        
+        F_modelselection = configfile["F_modelselection"][0]
+        
+        """
         if DOE == "Full_factorial":
             
             # Convert the factors into the original level values
@@ -78,7 +92,7 @@ for experiment_i in experiments.RUN:
             F_population_size = experiments.F_population_size[RUN]
             F_lofi_epochs = experiments.F_lofi_epochs[RUN]
             
-            
+           
                
         # Search parameters:        
         population_size = F_population_size
@@ -86,7 +100,7 @@ for experiment_i in experiments.RUN:
         k_in_hall_of_fame = population_size * num_generations #Store all individuals
         Finalmodel_epochs = 700
 
-
+        
         #### Experiment settings
                 
         configfile = pd.DataFrame({"RUN":RUN,
@@ -102,7 +116,7 @@ for experiment_i in experiments.RUN:
         
         configfile.to_csv(configfilename,index=False)
         configfile.to_csv("experiments/"+str(RUN)+"/"+"Configfile.csv",index=False)
-        
+        """ 
         print("================================"*3)
         print(configfile.loc[0])
         print("================================"*3)
@@ -114,7 +128,7 @@ for experiment_i in experiments.RUN:
         
         if F_modelselection == "RS":
             
-            Results = pd.read_csv("experiments/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
+            Results = pd.read_csv(Project_dir+"/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
             Winner = Results.sort_values(by=['MAE'], ascending=True).reset_index(drop=True).loc[0]
                         
             # MAE example:
@@ -124,7 +138,7 @@ for experiment_i in experiments.RUN:
         ###############################################################################
         if F_modelselection == "Multiple":
             
-            Results = pd.read_csv("experiments/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
+            Results = pd.read_csv(Project_dir+"/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
             
             # Selection according to MAE or MAEPE:
             Pareto_winner = Results.loc[0]
@@ -137,7 +151,7 @@ for experiment_i in experiments.RUN:
         ###############################################################################
         if F_modelselection == "Single-MAE" or F_modelselection == "Single-MEP":
             
-            Results = pd.read_csv("experiments/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
+            Results = pd.read_csv(Project_dir+"/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
             
             if F_modelselection == "Single-MAE":
                 # Selection according to MAE or MAEPE:
@@ -158,11 +172,11 @@ for experiment_i in experiments.RUN:
             
         if len(Final_training_results) > 0:
             Final_training_results = Final_training_results.append(Experiment_results)            
-            Final_training_results.to_csv("experiments/Final_models/Final_model_training_results.csv",index=False)
+            Final_training_results.to_csv(Project_dir+"/"+"Final_models/Final_model_training_results.csv",index=False)
                         
         if len(Final_training_results) == 0:
             Final_training_results = Experiment_results
-            Final_training_results.to_csv("experiments/Final_models/Final_model_training_results.csv",index=False)
+            Final_training_results.to_csv(Project_dir+"/"+"Final_models/Final_model_training_results.csv",index=False)
             
         ###############################################################################
         # Log the status of the experiment
@@ -175,7 +189,7 @@ for experiment_i in experiments.RUN:
         
 if RUN == Max_models:
     #Create the final table:
-    Final_training_results = pd.read_csv("experiments/Final_models/Final_model_training_results.csv")
+    Final_training_results = pd.read_csv(Project_dir+"/"+"Final_models/Final_model_training_results.csv")
     experiments_merged = experiments.merge(Final_training_results, on='RUN', how='left')
-    experiments_merged.to_csv("Final_experiments_merged.csv",index=False)
+    experiments_merged.to_csv(Project_dir+"/"+"Final_experiments_merged.csv",index=False)
 
