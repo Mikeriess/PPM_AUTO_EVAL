@@ -9,23 +9,23 @@ DOE = "Full_factorial"#"Fractional_factorial"
 if DOE == "Full_factorial":
     #Simple setup for testing purposes:
     Settings = {'F_modeltype':["LSTM"],
-                'F_modelselection':["Single-MAE"], #"RS","Single-MAE","Multiple", ,"Single-MEP"
+                'F_modelselection':["Single-MAE","RS"], #"RS","Single-MAE","Multiple", ,"Single-MEP"
                 'F_dataset':["Sepsis"],  # Does this differ over datasets? ,
                               #"Sepsis",
                               #"Helpdesk",
                               #"Hospital_billing",
                               #"SF_eventlog_filter_length1",
                               #"traffic_fines"
-                'F_mutation_prob':[0.2,0.8], #0.02, 0.1, 0.2, 0.5 #Same as in GA paper (Exploitation), balanced, and exploration (lots of randomness)
-                'F_num_generations':[5], #2, 10
-                'F_population_size':[5,10], #5, 20
-                'F_lofi_epochs':[50,150]} #1, 10, 20, 30, 40, 50 #,10 # Fast, balanced, thorough
+                'F_mutation_prob':[0.02, 0.8], #0.02, 0.1, 0.2, 0.5 #Same as in GA paper (Exploitation), balanced, and exploration (lots of randomness)
+                'F_num_generations':[2,6], #2, 10
+                'F_population_size':[4,12], #5, 20
+                'F_lofi_epochs':[25,150]} #1, 10, 20, 30, 40, 50 #,10 # Fast, balanced, thorough
     
     # Generate a full factorial:
     df=build_full_fact(Settings)  
     
     # Set the final number of epochs for all models
-    Final_epochs = 800
+    Final_epochs = 2000 #800
     
     # Add notes to the configfile
     Settings["Notes"] = "Testing GA across multiple levels. Fixed set of generations (5), but two levels across all GA and Lo-fi related factors."

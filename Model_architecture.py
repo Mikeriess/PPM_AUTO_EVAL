@@ -27,16 +27,14 @@ import tensorflow.keras.callbacks as Kc
 
 
 
+# TF2: Mixed precision
 
-# Disable eager execution
-import tensorflow as tf
-tf.compat.v1.disable_eager_execution()
-
-# Mixed precision
-#tf.keras.mixed_precision.experimental.set_policy('float16')
 #from tensorflow.keras.mixed_precision import experimental as mixed_precision
 #mixed_precision.set_policy('mixed_float16')
 
+# TF2: Disable eager execution
+#import tensorflow as tf
+#tf.compat.v1.disable_eager_execution()
 
 
 import time
@@ -265,12 +263,14 @@ def GenModel(data_objects, model_params):
                 if BLOCK_TYPE == 1:
                     model.add(LSTM(FULLY_CONNECTED,  implementation=2, 
                                          recurrent_dropout=DROPOUT_RATE, 
+                                         input_shape=input_dim,
                                          return_sequences=False))
                     
                 # LSTM with batchNorm and recurrent dropout
                 if BLOCK_TYPE == 2:
                     model.add(LSTM(FULLY_CONNECTED,  implementation=2, 
                                          recurrent_dropout=DROPOUT_RATE, 
+                                         input_shape=input_dim,
                                          return_sequences=False))
                     model.add(BatchNormalization())
                    
@@ -296,7 +296,7 @@ def GenModel(data_objects, model_params):
     #######################################################################
 
     
-    model = Sequential()
+    model = Sequential() ####### input_shape=input_dim
     
     if F_modeltype == "LSTM":
         

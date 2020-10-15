@@ -65,6 +65,8 @@ for experiment_i in experiments.RUN:
         
         F_modelselection = configfile["F_modelselection"][0]
         
+        configfile.to_csv(configfilename,index=False)
+        
         """
         if DOE == "Full_factorial":
             

@@ -39,15 +39,16 @@ from sklearn.model_selection import train_test_split as split
 import tensorflow.keras.backend as K
 import tensorflow.keras.callbacks as Kc
 
-# Mixed precision
+# TF2: Mixed precision
 
 #from tensorflow.keras.mixed_precision import experimental as mixed_precision
 #mixed_precision.set_policy('mixed_float16')
 
-# Disable eager execution
-import tensorflow as tf
-tf.compat.v1.disable_eager_execution()
+# TF2: Disable eager execution
+#import tensorflow as tf
+#tf.compat.v1.disable_eager_execution()
 
+import os
 import time
 from datetime import datetime
 
@@ -132,7 +133,8 @@ def prepare_dataset(suffix=None, sample=1.0):
 
 def train_model(data_objects, model_params, final_model=False):
     # To prevent tensorboard errors
-    #K.clear_session()
+    K.clear_session()
+    from tensorflow.keras.models import load_model
     
     #### Load the data ########
     x_train, y_train = data_objects["x_train"], data_objects["y_train"]
@@ -168,9 +170,30 @@ def train_model(data_objects, model_params, final_model=False):
     # Model Type/Architecture
     ##########################################################
     
-    # Generate the model
-    model, blocks_built = GenModel(data_objects, model_params)
+    """
+    Lofi-update:
+        Check if model (elite individual) already exist:
+            If no:
+                GenModel
+            Else:
+                Load model
+    """
     
+    #Destination for model:
+    modeldestination = Project_dir + "/" + str(RUN)+ "/models/" + str(model_params["individual"]) +".h5"
+    
+    # If model exist, load model:
+    if os.path.exists(modeldestination):
+        print("Loading frozen model, continuing from last checkpoint..")
+        model = load_model(modeldestination)
+        blocks_built = 0
+    
+    # If model does not already exist, gen model
+    if not os.path.exists(modeldestination):
+        print("Model did not exist already, generating..")
+        model, blocks_built = GenModel(data_objects, model_params)
+        
+         
     ##########################################################
     # Multi GPU
     ##########################################################
@@ -189,9 +212,19 @@ def train_model(data_objects, model_params, final_model=False):
     time_callback = TimeHistory()
     
     #Early stopping for the initial search
-    earlystop_patience = 20 #42 for the navarini paper
+    earlystop_patience = 42 #20 #42 for the navarini paper
     
     early_stopping = EarlyStopping(patience=earlystop_patience)    
+    
+    #Reduce learning rate (same for both intial and final)
+    lr_reducer = ReduceLROnPlateau(monitor='val_loss', 
+                                   factor=0.5, 
+                                   patience=10, 
+                                   verbose=1, 
+                                   mode='auto', 
+                                   epsilon=0.0001, 
+                                   cooldown=0, 
+                                   min_lr=0)
     
     # Batch size:
     batch_size = model_params["batch_size"]
@@ -232,6 +265,7 @@ def train_model(data_objects, model_params, final_model=False):
                   batch_size=batch_size,
                   callbacks=[early_stopping,
                              model_checkpoint,
+                            #lr_reducer,
                             csv_logger, 
                             time_callback],
                   epochs=epochs,
@@ -241,7 +275,7 @@ def train_model(data_objects, model_params, final_model=False):
         
         # REPLACE with best version of the model (checkpoint)
         if epochs > 1:
-            from tensorflow.keras.models import load_model
+            #from tensorflow.keras.models import load_model
             model = load_model(filename)
         
     ########################################################
@@ -249,14 +283,13 @@ def train_model(data_objects, model_params, final_model=False):
     ########################################################
     
     if final_model == True:
+        #from tensorflow.keras.models import load_model
         
         #Load the winner model:
         modeldestination = Project_dir + "/" + str(RUN)+ "/models/" + str(model_params["individual"]) +".h5"
+        print("Loading model..")
         
-        from tensorflow.keras.models import load_model
         model = load_model(modeldestination)
-        print("Loaded model..")
-        print(modeldestination)
         
         #Filename for the model: FINAL
         filename = Project_dir + "/Final_models/models/" +"Experiment_"+str(RUN)+"" + str(model_params["individual"]) +".h5"
@@ -267,21 +300,13 @@ def train_model(data_objects, model_params, final_model=False):
                                    save_best_only=True, 
                                    mode='auto')
              
-        lr_reducer = ReduceLROnPlateau(monitor='val_loss', 
-                                       factor=0.5, 
-                                       patience=10, 
-                                       verbose=1, 
-                                       mode='auto', 
-                                       epsilon=0.0001, 
-                                       cooldown=0, 
-                                       min_lr=0)
-        """
+        
         #compiling the model, creating the callbacks
         model.compile(loss='mae', #L1 loss
               optimizer=optimizer, 
               metrics=['mae']) #'mean_squared_error','mae','mape'
         
-        """
+        
         # Store starttime
         start_time = time.time()
         

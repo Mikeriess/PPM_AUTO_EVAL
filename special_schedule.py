@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct  5 23:55:14 2020
-
-@author: Mike
-"""
-
-
-# -*- coding: utf-8 -*-
-"""
 Created on Wed Jul  1 16:39:58 2020
 
 @author: Mike
@@ -18,16 +10,25 @@ import os
 # Project specs:
 
 # Project name
-project_name = "PPM-AUTO-EVAL_helpdesk" #_helpdesk
+#project_name = "PPM-AUTO-EVAL-MAIN" #_helpdesk
 
 # Parent destination    
-parent = "A:/EXPERIMENTS/"
+workdir = "A:/EXPERIMENTS/PPM-AUTO-EVAL-MAIN/"
+
+# Experiment folder name
+project_name ="GA_Factors_test" #"experiments_GA_gen3_pop5_lofi150_MSE"
 
 # Generate the project folder if it doesnt exist
-path = os.path.join(parent, str(project_name))
-if not os.path.exists(path):
-    os.mkdir(path)
-    os.mkdir(path+"/experiments")
+project_dir = workdir+ str("/"+project_name)
+
+# Parent Directory path for storage of experiments
+if not os.path.exists(project_dir):
+    os.mkdir(project_dir)
+    os.mkdir(project_dir+"/Final_models")
+    os.mkdir(project_dir+"/Final_models"+"/individuals")
+    os.mkdir(project_dir+"/Final_models"+"/inference_tables")
+    os.mkdir(project_dir+"/Final_models"+"/models")
+    os.mkdir(project_dir+"/Final_models"+"/train_logfiles")
 
 ##############################################################################
 
@@ -35,14 +36,13 @@ if not os.path.exists(path):
 configfilename = "configfile.csv"
 store_progress = False
 
-# Parent Directory path for storage of experiments
-parent_dir = path+"/experiments"
-
 # Specify whether to use Fractional factorial (with labels) or full factorial without.
 DOE = ["Full_factorial","Fractional_factorial"][0]
 
 ##############################################################################
 
+# Set the workdir
+os.chdir(workdir)
 
 from deap import base, creator, tools, algorithms
 from scipy.stats import bernoulli
@@ -51,11 +51,11 @@ import time
 
 import numpy as np
 import pandas as pd
-from Model_search_helpers import *
-from Eval_helpers import *
-from Reporting import*
+from PPM_AUTO_EVAL.Model_search_helpers import *
+from PPM_AUTO_EVAL.Eval_helpers import *
+from PPM_AUTO_EVAL.Reporting import*
 
-from HPO_searchspace import *
+from PPM_AUTO_EVAL.HPO_searchspace import *
 
 # Load up the experiments
 experiments = pd.read_csv("experiments.csv")
@@ -69,7 +69,7 @@ Elitism: https://groups.google.com/forum/#!topic/deap-users/FCPOYmO_enQ
 """
 
 # Load constant GA search settings
-elitism = 1                  #same as GA paper
+elitism = 1 #2                  #same as GA paper <<<<<< should perhaps be more than 1!
 #crossover_probability = 0.8 #same as GA paper <<<<<< changed to 1-mutation prob, since they either mutate or cross over
 
 
@@ -96,7 +96,7 @@ for experiment_i in experiment_list:
         import os 
           
         #Experiment
-        path = os.path.join(parent_dir, str(experiment_i)) 
+        path = os.path.join(project_dir, str(experiment_i)) 
         
         if not os.path.exists(path):
             os.mkdir(path) 
@@ -155,12 +155,16 @@ for experiment_i in experiment_list:
             F_lofi_epochs = experiments.F_lofi_epochs[RUN]
             
             
+            
                
         # Search parameters:        
         population_size = F_population_size
         num_generations = F_num_generations
         k_in_hall_of_fame = population_size * num_generations #Store all individuals
-        Finalmodel_epochs = 250
+        Finalmodel_epochs = experiments.Finalmodel_epochs.values[0]
+        
+        # Additional info
+        Experiment_notes = Experiment_Settings["Notes"]
 
 
         #### Experiment settings
@@ -174,10 +178,12 @@ for experiment_i in experiment_list:
                                    "F_lofi_epochs":F_lofi_epochs,
                                    "F_modeltype":F_modeltype,
                                    "HOF_size":k_in_hall_of_fame,
-                                   "Finalmodel_epochs":Finalmodel_epochs}, index=[0])
+                                   "Finalmodel_epochs":Finalmodel_epochs,
+                                   "Project_dir":project_dir,
+                                   "Notes":Experiment_notes}, index=[0])
         
         configfile.to_csv(configfilename,index=False)
-        configfile.to_csv("experiments/"+str(RUN)+"/"+"Configfile.csv",index=False)
+        configfile.to_csv(project_dir+"/"+str(RUN)+"/"+"Configfile.csv",index=False)
         
         print("================================"*3)
         print(configfile.loc[0])
@@ -206,7 +212,7 @@ for experiment_i in experiment_list:
             
             # Binary mate, mutate 
             toolbox.register('mate', tools.cxOrdered)
-            toolbox.register('mutate', tools.mutShuffleIndexes, indpb = 0.5) #50% chance of shuffling attr
+            toolbox.register('mutate', tools.mutShuffleIndexes, indpb = 0.5) #Independent probability for each attribute to be exchanged to another position (50% chance of shuffling attr, if individual is selected)
             
             # NSGA-II selection
             toolbox.register("select", tools.selNSGA2)
@@ -226,7 +232,6 @@ for experiment_i in experiment_list:
             
             # Save some statistics:
             statistics = tools.Statistics(key=lambda ind: ind.fitness.values)
-            #statistics.register("avg", np.mean)
             statistics.register("avg", np.mean, axis=0)
             statistics.register("std", np.std, axis=0)
             statistics.register("min", np.min, axis=0)
@@ -246,8 +251,8 @@ for experiment_i in experiment_list:
             lastgen, logbook = algorithms.eaMuPlusLambda(pop, toolbox, 
                                                  mu=toolbox.pop_size, #The number of individuals to select for the next generation.
                                                  lambda_= toolbox.pop_size + elitism, #The number of children to produce at each generation.
-                                                 cxpb=1-toolbox.mut_prob, #CXPB
-                                                 mutpb=toolbox.mut_prob, #MUTPB
+                                                 cxpb=1-toolbox.mut_prob, #CXPB is the probability that an offspring is produced by crossover (1- mutation prob = if not mutated, then cross over)
+                                                 mutpb=toolbox.mut_prob, #MUTPB is The probability that an offspring is produced by mutation
                                                  stats=statistics, 
                                                  halloffame=hof, #Save the all-time K best individuals
                                                  ngen=toolbox.max_gen, #The number of generation.
@@ -308,8 +313,8 @@ for experiment_i in experiment_list:
             toolbox.register('population', tools.initRepeat, list , toolbox.individual)
             
             toolbox.register('mate', tools.cxOrdered)
-            toolbox.register('mutate', tools.mutShuffleIndexes, indpb = 0.5) #50% chance of shuffling attr
-            toolbox.register('select', tools.selRoulette)
+            toolbox.register('mutate', tools.mutShuffleIndexes, indpb = 0.5) #Independent probability for each attribute to be exchanged to another position (50% chance of shuffling attr, if individual is selected)
+            toolbox.register('select', tools.selBest)
             toolbox.register('evaluate', train_evaluate)
             
             # Use the toolbox to store other configuration parameters of the algorithm. 
@@ -329,8 +334,6 @@ for experiment_i in experiment_list:
             
             # Save hall of fame:
             hof = tools.HallOfFame(k_in_hall_of_fame)
-            
-            # A compact implementation
             
             # Storing all the required information in the toolbox and using DEAP's 
             # algorithms.eaMuPlusLambda function
@@ -408,11 +411,11 @@ for experiment_i in experiment_list:
                 
                 if i == 0:
                     # Load each result table
-                    last_gen_results = pd.read_csv("experiments/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
+                    last_gen_results = pd.read_csv(project_dir+"/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
                     
                 if i > 0:
                     # Load each result table
-                    individual_i_res = pd.read_csv("experiments/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
+                    individual_i_res = pd.read_csv(project_dir+"/"+str(RUN)+"/individuals/"+str(RUN)+"_"+individual_numid+".csv")
                     
                     #append to existing table
                     last_gen_results = last_gen_results.append(individual_i_res, ignore_index=True)
@@ -427,7 +430,7 @@ for experiment_i in experiment_list:
             #last_gen_results.to_csv("experiments/"+str(RUN)+"/"+str(RUN)+"_RS_all_models_results.csv",index=False)
             
             last_gen_results["Search"] = "RS"
-            last_gen_results.to_csv("experiments/"+str(RUN)+"/HOF_results.csv",index=False)
+            last_gen_results.to_csv(project_dir+"/"+str(RUN)+"/HOF_results.csv",index=False)
             
             hof_results = last_gen_results
         
@@ -461,22 +464,20 @@ for experiment_i in experiment_list:
         experiments.In_Progress.loc[experiments.RUN == experiment_i] = 0
         experiments.Duration_sec.loc[experiments.RUN == experiment_i] = Time_sec
         experiments.to_csv("experiments.csv",index=False)
-        
-        
+        experiments.to_csv(project_dir+"/"+"experiments.csv",index=False)
         
 """
 #######################################################################################
 """
-
-
-
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jul 20 18:03:46 2020
 
 @author: Mike
 """
-
+# Set the workdir
+import os
+os.chdir("../")
 
 from deap import base, creator, tools, algorithms
 from scipy.stats import bernoulli
@@ -485,10 +486,17 @@ import time
 
 import numpy as np
 import pandas as pd
-from Model_search_helpers import *
-from Eval_helpers import *
 
-from HPO_searchspace import *
+from PPM_AUTO_EVAL.Model_search_helpers import *
+from PPM_AUTO_EVAL.Eval_helpers import *
+from PPM_AUTO_EVAL.HPO_searchspace import *
+
+
+
+# Load the project dir
+configfile = pd.read_csv("configfile.csv")
+Project_dir = configfile.Project_dir.values[0]
+
 
 K = 1
 DOE = ["Full_factorial","Fractional_factorial"][0]
@@ -524,6 +532,13 @@ for experiment_i in experiments.RUN:
         # Load the levels of the experiment
         Experiment_Settings = np.load('Experiment_Settings.npy',allow_pickle='TRUE').item()
         
+        configfile = pd.read_csv(Project_dir+"/"+str(RUN)+"/configfile.csv")
+        
+        F_modelselection = configfile["F_modelselection"][0]
+        
+        configfile.to_csv(configfilename,index=False)
+        
+        """
         if DOE == "Full_factorial":
             
             # Convert the factors into the original level values
@@ -550,7 +565,7 @@ for experiment_i in experiments.RUN:
             F_population_size = experiments.F_population_size[RUN]
             F_lofi_epochs = experiments.F_lofi_epochs[RUN]
             
-            
+           
                
         # Search parameters:        
         population_size = F_population_size
@@ -558,7 +573,7 @@ for experiment_i in experiments.RUN:
         k_in_hall_of_fame = population_size * num_generations #Store all individuals
         Finalmodel_epochs = 700
 
-
+        
         #### Experiment settings
                 
         configfile = pd.DataFrame({"RUN":RUN,
@@ -574,7 +589,7 @@ for experiment_i in experiments.RUN:
         
         configfile.to_csv(configfilename,index=False)
         configfile.to_csv("experiments/"+str(RUN)+"/"+"Configfile.csv",index=False)
-        
+        """ 
         print("================================"*3)
         print(configfile.loc[0])
         print("================================"*3)
@@ -586,7 +601,7 @@ for experiment_i in experiments.RUN:
         
         if F_modelselection == "RS":
             
-            Results = pd.read_csv("experiments/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
+            Results = pd.read_csv(Project_dir+"/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
             Winner = Results.sort_values(by=['MAE'], ascending=True).reset_index(drop=True).loc[0]
                         
             # MAE example:
@@ -596,7 +611,7 @@ for experiment_i in experiments.RUN:
         ###############################################################################
         if F_modelselection == "Multiple":
             
-            Results = pd.read_csv("experiments/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
+            Results = pd.read_csv(Project_dir+"/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
             
             # Selection according to MAE or MAEPE:
             Pareto_winner = Results.loc[0]
@@ -609,7 +624,7 @@ for experiment_i in experiments.RUN:
         ###############################################################################
         if F_modelselection == "Single-MAE" or F_modelselection == "Single-MEP":
             
-            Results = pd.read_csv("experiments/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
+            Results = pd.read_csv(Project_dir+"/"+str(RUN)+"/HOF_results.csv") #"+str(RUN)+"_
             
             if F_modelselection == "Single-MAE":
                 # Selection according to MAE or MAEPE:
@@ -630,11 +645,11 @@ for experiment_i in experiments.RUN:
             
         if len(Final_training_results) > 0:
             Final_training_results = Final_training_results.append(Experiment_results)            
-            Final_training_results.to_csv("experiments/Final_models/Final_model_training_results.csv",index=False)
+            Final_training_results.to_csv(Project_dir+"/"+"Final_models/Final_model_training_results.csv",index=False)
                         
         if len(Final_training_results) == 0:
             Final_training_results = Experiment_results
-            Final_training_results.to_csv("experiments/Final_models/Final_model_training_results.csv",index=False)
+            Final_training_results.to_csv(Project_dir+"/"+"Final_models/Final_model_training_results.csv",index=False)
             
         ###############################################################################
         # Log the status of the experiment
@@ -647,7 +662,7 @@ for experiment_i in experiments.RUN:
         
 if RUN == Max_models:
     #Create the final table:
-    Final_training_results = pd.read_csv("experiments/Final_models/Final_model_training_results.csv")
+    Final_training_results = pd.read_csv(Project_dir+"/"+"Final_models/Final_model_training_results.csv")
     experiments_merged = experiments.merge(Final_training_results, on='RUN', how='left')
-    experiments_merged.to_csv("Final_experiments_merged.csv",index=False)
+    experiments_merged.to_csv(Project_dir+"/"+"Final_experiments_merged.csv",index=False)
 

@@ -16,7 +16,7 @@ import os
 workdir = "A:/EXPERIMENTS/PPM-AUTO-EVAL-MAIN/"
 
 # Experiment folder name
-project_name ="GA_Lofi_Sepsis_2levels" #"experiments_GA_gen3_pop5_lofi150_MSE"
+project_name ="GA_Factors_test" #"experiments_GA_gen3_pop5_lofi150_MSE"
 
 # Generate the project folder if it doesnt exist
 project_dir = workdir+ str("/"+project_name)
@@ -69,7 +69,7 @@ Elitism: https://groups.google.com/forum/#!topic/deap-users/FCPOYmO_enQ
 """
 
 # Load constant GA search settings
-elitism = 2#1                  #same as GA paper <<<<<< should perhaps be more than 1!
+elitism = 1 #2                  #same as GA paper <<<<<< should perhaps be more than 1!
 #crossover_probability = 0.8 #same as GA paper <<<<<< changed to 1-mutation prob, since they either mutate or cross over
 
 
