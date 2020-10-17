@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-from tensorflow.keras.layers import Dense, Input, LSTM, Embedding, Dropout, Activation, Flatten
+from tensorflow.keras.layers import Dense, Input, LSTM, Embedding, Dropout, Activation, Flatten, CuDNNLSTM
 from tensorflow.keras.layers import Bidirectional, GlobalMaxPool1D, BatchNormalization, Conv1D, GlobalMaxPooling1D
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau, CSVLogger
@@ -241,13 +241,13 @@ def GenModel(data_objects, model_params):
                    
                 # LSTM with no dropout
                 if BLOCK_TYPE == 3:
-                   model.add(LSTM(FULLY_CONNECTED,  implementation=2, 
+                   model.add(CuDNNLSTM(FULLY_CONNECTED,  #implementation=2, 
                                          input_shape=input_dim,
                                          return_sequences=True))
                 
                 # LSTM with batchNorm and no dropout
                 if BLOCK_TYPE == 4:
-                   model.add(LSTM(FULLY_CONNECTED,  implementation=2, 
+                   model.add(CuDNNLSTM(FULLY_CONNECTED,  #implementation=2, 
                                          input_shape=input_dim,
                                          return_sequences=True))
                    model.add(BatchNormalization())
@@ -276,13 +276,13 @@ def GenModel(data_objects, model_params):
                    
                 # LSTM with no dropout
                 if BLOCK_TYPE == 3:
-                   model.add(LSTM(FULLY_CONNECTED,  implementation=2, 
+                   model.add(CuDNNLSTM(FULLY_CONNECTED,  #implementation=2, 
                                          input_shape=input_dim,
                                          return_sequences=False))
                 
                 # LSTM with batchNorm and no dropout
                 if BLOCK_TYPE == 4:
-                   model.add(LSTM(FULLY_CONNECTED,  implementation=2, 
+                   model.add(CuDNNLSTM(FULLY_CONNECTED,  #implementation=2, 
                                          input_shape=input_dim,
                                          return_sequences=False))
                    model.add(BatchNormalization())

@@ -16,7 +16,7 @@ import os
 workdir = "A:/EXPERIMENTS/PPM-AUTO-EVAL-MAIN/"
 
 # Experiment folder name
-project_name ="GA_Factors_test" #"experiments_GA_gen3_pop5_lofi150_MSE"
+project_name ="GA_Factors_test_freeze" #"experiments_GA_gen3_pop5_lofi150_MSE"
 
 # Generate the project folder if it doesnt exist
 project_dir = workdir+ str("/"+project_name)
@@ -89,6 +89,7 @@ for experiment_i in experiment_list:
         if store_progress == True:
             experiments.In_Progress.loc[experiments.RUN == experiment_i] = 1
             experiments.to_csv("experiments.csv",index=False)
+            experiments.to_csv(project_dir+"/"+"experiments.csv",index=False)
         
         #### Generate a folder for the experiment
         
@@ -128,6 +129,11 @@ for experiment_i in experiment_list:
         # Load the levels of the experiment
         Experiment_Settings = np.load('Experiment_Settings.npy',allow_pickle='TRUE').item()
         
+        # Store them in project folder
+        np.save(project_dir+"/"+'Experiment_Settings.npy', Experiment_Settings) 
+        settings = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in Experiment_Settings.items() ]))
+        settings.to_csv(project_dir+"/"+'Experiment_Settings.csv',index=False)
+        
         if DOE == "Full_factorial":
             
             # Convert the factors into the original level values
@@ -165,7 +171,6 @@ for experiment_i in experiment_list:
         
         # Additional info
         Experiment_notes = Experiment_Settings["Notes"]
-
 
         #### Experiment settings
                 
@@ -449,10 +454,10 @@ for experiment_i in experiment_list:
         experiments.MEP_avg.loc[experiments.RUN == experiment_i] = float(np.mean(hof_results["MEP"].values))
         experiments.MEP_std.loc[experiments.RUN == experiment_i] = float(np.std(hof_results["MEP"].values))
         
-        experiments.MAEPE_min.loc[experiments.RUN == experiment_i] = float(np.min(hof_results["MAEPE"].values))
-        experiments.MAEPE_max.loc[experiments.RUN == experiment_i] = float(np.max(hof_results["MAEPE"].values))
-        experiments.MAEPE_avg.loc[experiments.RUN == experiment_i] = float(np.mean(hof_results["MAEPE"].values))
-        experiments.MAEPE_std.loc[experiments.RUN == experiment_i] = float(np.std(hof_results["MAEPE"].values))
+        #experiments.MAEPE_min.loc[experiments.RUN == experiment_i] = float(np.min(hof_results["MAEPE"].values))
+        #experiments.MAEPE_max.loc[experiments.RUN == experiment_i] = float(np.max(hof_results["MAEPE"].values))
+        #experiments.MAEPE_avg.loc[experiments.RUN == experiment_i] = float(np.mean(hof_results["MAEPE"].values))
+        #experiments.MAEPE_std.loc[experiments.RUN == experiment_i] = float(np.std(hof_results["MAEPE"].values))
         
         experiments.Num_models.loc[experiments.RUN == experiment_i] = len(hof_results)
         
